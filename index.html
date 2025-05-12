@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitGen - Personalized Workout Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .exercise-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .exercise-card {
+            transition: all 0.3s ease;
+        }
+        #adminPanel {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-indigo-700 mb-2">FitGen</h1>
+            <p class="text-gray-600">Your personalized daily workout generator</p>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- User Input Form -->
+            <div id="userForm" class="bg-white rounded-xl shadow-md p-6 mb-8 fade-in">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Create Your Workout Plan</h2>
+                
+                <form id="workoutForm" class="space-y-6">
+                    <div>
+                        <label for="time" class="block text-sm font-medium text-gray-700 mb-1">Time Available (minutes)</label>
+                        <select id="time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="15">15 minutes</option>
+                            <option value="30" selected>30 minutes</option>
+                            <option value="45">45 minutes</option>
+                            <option value="60">60 minutes</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Fitness Level</label>
+                        <select id="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate" selected>Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="goal" class="block text-sm font-medium text-gray-700 mb-1">Primary Goal</label>
+                        <select id="goal" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="weightLoss">Weight Loss</option>
+                            <option value="muscleGain">Muscle Gain</option>
+                            <option value="flexibility">Flexibility</option>
+                            <option value="cardio">Cardio</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email (to save your plan)</label>
+                        <input type="email" id="email" placeholder="your@email.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-dumbbell mr-2"></i> Generate My Workout
+                    </button>
+                </form>
+            </div>
+
+            <!-- Tip of the Day -->
+            <div id="tipContainer" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg fade-in hidden">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-lightbulb text-yellow-500 text-xl mt-1"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">Tip of the Day</h3>
+                        <div id="dailyTip" class="text-sm text-yellow-700 mt-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workout Plan Result -->
+            <div id="workoutResult" class="bg-white rounded-xl shadow-md p-6 mb-8 fade-in hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Your Custom Workout Plan</h2>
+                    <button id="printPlan" class="text-indigo-600 hover:text-indigo-800">
+                        <i class="fas fa-print mr-1"></i> Print
+                    </button>
+                </div>
+                
+                <div id="planDetails" class="space-y-6">
+                    <!-- Dynamically filled by JavaScript -->
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <button id="newPlan" class="w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition duration-300">
+                        <i class="fas fa-redo mr-2"></i> Create New Plan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Panel Toggle -->
+            <div class="text-center mb-8">
+                <button id="toggleAdmin" class="text-sm text-gray-500 hover:text-indigo-600">
+                    <i class="fas fa-cog mr-1"></i> Coach Admin Panel
+                </button>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="adminPanel" class="bg-white rounded-xl shadow-md p-6 mb-8 fade-in">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Coach Admin Panel</h2>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">Add New Exercise</h3>
+                    <form id="addExerciseForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="exName" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" id="exName" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label for="exType" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <select id="exType" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="weightLoss">Weight Loss</option>
+                                <option value="muscleGain">Muscle Gain</option>
+                                <option value="flexibility">Flexibility</option>
+                                <option value="cardio">Cardio</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="exLevel" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                            <select id="exLevel" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
+                                Add Exercise
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">Exercise Database</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exercise</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exerciseList" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamically filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-500 text-sm mt-12">
+            <p>© 2023 FitGen Workout Planner. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Exercise database
+        let exercises = [
+            // Weight Loss
+            { name: "Jumping Jacks", type: "weightLoss", level: "beginner" },
+            { name: "High Knees", type: "weightLoss", level: "beginner" },
+            { name: "Burpees", type: "weightLoss", level: "intermediate" },
+            { name: "Mountain Climbers", type: "weightLoss", level: "intermediate" },
+            { name: "Jump Rope", type: "weightLoss", level: "advanced" },
+            { name: "Box Jumps", type: "weightLoss", level: "advanced" },
+            
+            // Muscle Gain
+            { name: "Push-ups", type: "muscleGain", level: "beginner" },
+            { name: "Bodyweight Squats", type: "muscleGain", level: "beginner" },
+            { name: "Pull-ups", type: "muscleGain", level: "intermediate" },
+            { name: "Dips", type: "muscleGain", level: "intermediate" },
+            { name: "Pistol Squats", type: "muscleGain", level: "advanced" },
+            { name: "Handstand Push-ups", type: "muscleGain", level: "advanced" },
+            
+            // Flexibility
+            { name: "Neck Rolls", type: "flexibility", level: "beginner" },
+            { name: "Shoulder Rolls", type: "flexibility", level: "beginner" },
+            { name: "Forward Fold", type: "flexibility", level: "intermediate" },
+            { name: "Cat-Cow Stretch", type: "flexibility", level: "intermediate" },
+            { name: "Splits", type: "flexibility", level: "advanced" },
+            { name: "Bridge Pose", type: "flexibility", level: "advanced" },
+            
+            // Cardio
+            { name: "Brisk Walking", type: "cardio", level: "beginner" },
+            { name: "Jogging", type: "cardio", level: "beginner" },
+            { name: "Cycling", type: "cardio", level: "intermediate" },
+            { name: "Swimming", type: "cardio", level: "intermediate" },
+            { name: "Sprinting", type: "cardio", level: "advanced" },
+            { name: "HIIT Circuit", type: "cardio", level: "advanced" }
+        ];
+
+        // Tips database
+        const tips = [
+            "Consistency is key! Even short workouts add up over time.",
+            "Stay hydrated - drink water before, during, and after your workout.",
+            "Focus on form over speed to prevent injuries.",
+            "Mix up your routine every few weeks to avoid plateaus.",
+            "Listen to your body - rest when you need to.",
+            "Pair your workouts with a balanced diet for best results.",
+            "Celebrate small victories - progress takes time!"
+        ];
+
+        // DOM elements
+        const userForm = document.getElementById('userForm');
+        const workoutForm = document.getElementById('workoutForm');
+        const workoutResult = document.getElementById('workoutResult');
+        const planDetails = document.getElementById('planDetails');
+        const newPlanBtn = document.getElementById('newPlan');
+        const printPlanBtn = document.getElementById('printPlan');
+        const tipContainer = document.getElementById('tipContainer');
+        const dailyTip = document.getElementById('dailyTip');
+        const toggleAdminBtn = document.getElementById('toggleAdmin');
+        const adminPanel = document.getElementById('adminPanel');
+        const addExerciseForm = document.getElementById('addExerciseForm');
+        const exerciseList = document.getElementById('exerciseList');
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show random tip
+            showRandomTip();
+            
+            // Render exercise list for admin
+            renderExerciseList();
+            
+            // Event listeners
+            workoutForm.addEventListener('submit', generateWorkout);
+            newPlanBtn.addEventListener('click', resetForm);
+            printPlanBtn.addEventListener('click', printWorkout);
+            toggleAdminBtn.addEventListener('click', toggleAdminPanel);
+            addExerciseForm.addEventListener('submit', addNewExercise);
+        });
+
+        // Generate workout based on user input
+        function generateWorkout(e) {
+            e.preventDefault();
+            
+            // Get user inputs
+            const time = parseInt(document.getElementById('time').value);
+            const level = document.getElementById('level').value;
+            const goal = document.getElementById('goal').value;
+            const email = document.getElementById('email').value;
+            
+            // Validate email
+            if (!validateEmail(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // Calculate number of exercises based on time
+            let exerciseCount;
+            if (time <= 15) exerciseCount = 4;
+            else if (time <= 30) exerciseCount = 6;
+            else if (time <= 45) exerciseCount = 8;
+            else exerciseCount = 10;
+            
+            // Filter exercises based on user's level and goal
+            const filteredExercises = exercises.filter(ex => 
+                ex.type === goal && ex.level === level
+            );
+            
+            // Shuffle and select exercises
+            const selectedExercises = shuffleArray([...filteredExercises]).slice(0, exerciseCount);
+            
+            // Calculate time per exercise (with warmup and cooldown)
+            const totalExerciseTime = time - 5; // 5 mins for warmup/cooldown
+            const timePerExercise = Math.floor(totalExerciseTime / exerciseCount);
+            
+            // Generate workout plan HTML
+            let workoutHTML = `
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Plan Summary</h3>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-500">Duration</p>
+                                <p class="font-medium">${time} minutes</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Level</p>
+                                <p class="font-medium capitalize">${level}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Goal</p>
+                                <p class="font-medium capitalize">${goal.replace(/([A-Z])/g, ' $1').trim()}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Exercises</p>
+                                <p class="font-medium">${exerciseCount}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">Workout Plan</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center bg-blue-50 p-3 rounded-lg">
+                            <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                <i class="fas fa-fire text-blue-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Warm-up</h4>
+                                <p class="text-sm text-gray-600">3 minutes of light cardio and dynamic stretches</p>
+                            </div>
+                        </div>
+            `;
+            
+            // Add exercises
+            selectedExercises.forEach((exercise, index) => {
+                workoutHTML += `
+                    <div class="exercise-card bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-start">
+                                <div class="bg-indigo-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-dumbbell text-indigo-500"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium">${exercise.name}</h4>
+                                    <p class="text-sm text-gray-600">${timePerExercise} ${timePerExercise === 1 ? 'minute' : 'minutes'} | ${getExerciseDescription(exercise.type)}</p>
+                                </div>
+                            </div>
+                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">${index + 1}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Add cooldown
+            workoutHTML += `
+                        <div class="flex items-center bg-purple-50 p-3 rounded-lg">
+                            <div class="bg-purple-100 p-2 rounded-full mr-3">
+                                <i class="fas fa-wind text-purple-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Cool-down</h4>
+                                <p class="text-sm text-gray-600">2 minutes of stretching and deep breathing</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Plan saved to your email</h3>
+                            <div class="text-sm text-green-700 mt-1">We've sent this workout plan to ${email}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Display the workout plan
+            planDetails.innerHTML = workoutHTML;
+            userForm.classList.add('hidden');
+            workoutResult.classList.remove('hidden');
+            tipContainer.classList.remove('hidden');
+            
+            // Scroll to results
+            workoutResult.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Helper function to get exercise description
+        function getExerciseDescription(type) {
+            const descriptions = {
+                weightLoss: "Calorie burning",
+                muscleGain: "Strength building",
+                flexibility: "Mobility improvement",
+                cardio: "Heart health"
+            };
+            return descriptions[type] || "";
+        }
+
+        // Reset form to create a new plan
+        function resetForm() {
+            workoutResult.classList.add('hidden');
+            userForm.classList.remove('hidden');
+            document.getElementById('email').value = '';
+            showRandomTip();
+            userForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Print workout plan
+        function printWorkout() {
+            const printContent = planDetails.innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            document.body.innerHTML = `
+                <div class="p-8">
+                    <h1 class="text-3xl font-bold text-center mb-6">Your FitGen Workout Plan</h1>
+                    ${printContent}
+                    <div class="mt-8 text-center text-sm text-gray-500">
+                        Generated by FitGen Workout Planner - ${new Date().toLocaleDateString()}
+                    </div>
+                </div>
+            `;
+            
+            window.print();
+            document.body.innerHTML = originalContent;
+            renderExerciseList(); // Re-render exercise list if admin panel was open
+        }
+
+        // Show random tip
+        function showRandomTip() {
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            dailyTip.textContent = randomTip;
+            tipContainer.classList.remove('hidden');
+        }
+
+        // Toggle admin panel
+        function toggleAdminPanel() {
+            adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Render exercise list for admin
+        function renderExerciseList() {
+            exerciseList.innerHTML = '';
+            
+            exercises.forEach((exercise, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">${exercise.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${exercise.type.replace(/([A-Z])/g, ' $1').trim()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${exercise.level}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="deleteExercise(${index})" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                
+                exerciseList.appendChild(row);
+            });
+        }
+
+        // Add new exercise
+        function addNewExercise(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('exName').value.trim();
+            const type = document.getElementById('exType').value;
+            const level = document.getElementById('exLevel').value;
+            
+            if (!name) {
+                alert('Please enter an exercise name');
+                return;
+            }
+            
+            const newExercise = { name, type, level };
+            exercises.push(newExercise);
+            
+            // Reset form and update list
+            document.getElementById('exName').value = '';
+            renderExerciseList();
+            
+            // Show confirmation
+            alert(`"${name}" has been added to the exercise database!`);
+        }
+
+        // Delete exercise
+        function deleteExercise(index) {
+            if (confirm(`Are you sure you want to delete "${exercises[index].name}"?`)) {
+                exercises.splice(index, 1);
+                renderExerciseList();
+            }
+        }
+
+        // Helper function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Helper function to validate email
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Make deleteExercise available globally
+        window.deleteExercise = deleteExercise;
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=seantech/fitness" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
